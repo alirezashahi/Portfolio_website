@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Mail, Phone, Linkedin, Send } from "lucide-react";
 import { Button } from "../components/ui/button";
-// Below import is commented until Convex setup is complete:
-// import { useMutation } from "convex/react";
-// import { api } from "../../convex/_generated/api";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -16,8 +15,7 @@ const ContactPage = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
   
-  // This will be uncommented once Convex is fully set up:
-  // const sendMessage = useMutation(api.messages.send);
+  const sendMessage = useMutation(api.messages.send);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -33,16 +31,11 @@ const ContactPage = () => {
     setError("");
     
     try {
-      // In a future implementation, this would send data to Convex
-      // Uncomment the below code when Convex is fully set up:
-      // await sendMessage({
-      //   name: formData.name,
-      //   email: formData.email,
-      //   message: formData.message,
-      // });
-      
-      // For now, we'll simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await sendMessage({
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+      });
       
       setIsSuccess(true);
       setFormData({
