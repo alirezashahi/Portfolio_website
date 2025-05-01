@@ -82,8 +82,9 @@ This project is configured for easy deployment to Vercel. Simply connect your Gi
 - Add a blog section
 - Add more visual elements (project screenshots, charts)
 - Add dark mode support
+- I have to add vlog next
 
 ## License
 
 This project is licensed under the MIT License.
->>>>>>> master
+>>>>>er>> mast
