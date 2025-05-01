@@ -1,54 +1,85 @@
-# React + TypeScript + Vite
+# Alireza Shahi - Personal Portfolio Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a personal portfolio website for Alireza Shahi, showcasing his skills, education, projects, and experience.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Responsive design that works on desktop, tablet, and mobile
+- Clean and modern UI using Tailwind CSS and Shadcn/ui components
+- Sections for Home, About, Projects, Skills, and Contact
+- Contact form (ready for Convex backend integration)
+- Accessible design with keyboard navigation support
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend:**
+  - React
+  - TypeScript
+  - Tailwind CSS
+  - Shadcn/ui (built on Radix UI and Tailwind CSS)
+  
+- **Backend / BaaS:**
+  - Convex (for future data storage and form submissions)
+  
+- **Development Tools:**
+  - Vite
+  - Git & GitHub
+  
+- **Deployment:**
+  - Vercel
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14 or higher)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+   ```
+   git clone <repository-url>
+   ```
+
+2. Navigate to the project directory
+   ```
+   cd alireza-portfolio
+   ```
+
+3. Install dependencies
+   ```
+   npm install
+   ```
+
+4. Create a `.env` file based on `.env.example` and add your Convex deployment URL if available
+
+5. Run the development server
+   ```
+   npm run dev
+   ```
+   
+6. Open your browser and navigate to `http://localhost:5173`
+
+## Building for Production
+
+```
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+This will create a `dist` folder with the production build of the website.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Deploying to Vercel
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+This project is configured for easy deployment to Vercel. Simply connect your GitHub repository to Vercel and it will automatically deploy the website.
+
+## Roadmap
+
+- Implement full Convex integration for the contact form
+- Add a blog section
+- Add more visual elements (project screenshots, charts)
+- Add dark mode support
+
+## License
+
+This project is licensed under the MIT License.
