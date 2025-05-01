@@ -4,6 +4,5 @@
   ],
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
-  "framework": "vite",
-  "nodeVersion": "18.x"
+  "framework": "vite"
 } 
