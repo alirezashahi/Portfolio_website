@@ -5,10 +5,33 @@ import { Doc, Id } from "./_generated/dataModel";
 // Debug function to test if the API is working
 export const debugFunction = query({
   args: {},
-  returns: v.string(),
+  returns: v.object({
+    status: v.string(),
+    timestamp: v.number(),
+    info: v.string()
+  }),
   handler: async (ctx) => {
     console.log("Debug function called");
-    return "Debug function is working!";
+    try {
+      // Count posts
+      const postCount = await ctx.db
+        .query("blogPosts")
+        .collect()
+        .then(posts => posts.length);
+      
+      return {
+        status: "success",
+        timestamp: Date.now(),
+        info: `Database connection successful. Found ${postCount} blog posts.`
+      };
+    } catch (error) {
+      console.error("Error in debug function:", error);
+      return {
+        status: "error",
+        timestamp: Date.now(),
+        info: `Error: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
   },
 });
 
@@ -20,17 +43,29 @@ export const getPublishedBlogPosts = query({
     _creationTime: v.number(),
     title: v.string(),
     slug: v.string(),
+    content: v.string(),
     summary: v.optional(v.string()),
     publishedDate: v.number(),
+    isPublished: v.boolean(),
   })),
   handler: async (ctx) => {
-    const posts = await ctx.db
-      .query("blogPosts")
-      .withIndex("by_isPublished", (q) => q.eq("isPublished", true))
-      .order("desc")
-      .collect();
-    
-    return posts;
+    console.log("getPublishedBlogPosts called");
+    try {
+      const posts = await ctx.db
+        .query("blogPosts")
+        .withIndex("by_isPublished", (q) => q.eq("isPublished", true))
+        .order("desc")
+        .collect();
+      
+      // Ensure we return an array
+      const result = Array.isArray(posts) ? posts : [];
+      console.log(`Found ${result.length} published posts:`, result);
+      return result;
+    } catch (error) {
+      console.error("Error fetching published blog posts:", error);
+      // If there's an error, return an empty array instead of throwing
+      return [];
+    }
   },
 });
 
@@ -74,12 +109,30 @@ export const getBlogPostBySlug = query({
     v.null()
   ),
   handler: async (ctx, args) => {
-    const post = await ctx.db
-      .query("blogPosts")
-      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
-      .first();
+    console.log("getBlogPostBySlug called with slug:", args.slug);
     
-    return post;
+    try {
+      if (!args.slug) {
+        console.error("Empty slug provided");
+        return null;
+      }
+      
+      const post = await ctx.db
+        .query("blogPosts")
+        .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+        .first();
+      
+      if (!post) {
+        console.log(`No post found with slug: ${args.slug}`);
+        return null;
+      }
+      
+      console.log("Found post:", post);
+      return post;
+    } catch (error) {
+      console.error("Error fetching blog post by slug:", error);
+      throw error;
+    }
   },
 });
 
@@ -94,16 +147,48 @@ export const createBlogPost = mutation({
   },
   returns: v.id("blogPosts"),
   handler: async (ctx, args) => {
-    const postId = await ctx.db.insert("blogPosts", {
+    console.log("Creating blog post with args:", {
       title: args.title,
       slug: args.slug,
-      content: args.content,
-      summary: args.summary,
-      isPublished: args.isPublished,
-      publishedDate: Date.now(),
+      contentLength: args.content.length,
+      hasSummary: !!args.summary,
+      isPublished: args.isPublished
     });
     
-    return postId;
+    try {
+      // Validate data
+      if (!args.title || !args.slug || !args.content) {
+        console.error("Missing required fields");
+        throw new Error("Missing required fields");
+      }
+      
+      // Check if a post with the same slug already exists
+      const existingPost = await ctx.db
+        .query("blogPosts")
+        .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+        .first();
+        
+      if (existingPost) {
+        console.error("A post with this slug already exists");
+        throw new Error("A post with this slug already exists");
+      }
+      
+      // Insert the post
+      const postId = await ctx.db.insert("blogPosts", {
+        title: args.title,
+        slug: args.slug,
+        content: args.content,
+        summary: args.summary,
+        isPublished: args.isPublished,
+        publishedDate: Date.now(),
+      });
+      
+      console.log("Blog post created successfully with ID:", postId);
+      return postId;
+    } catch (error) {
+      console.error("Error creating blog post:", error);
+      throw error;
+    }
   },
 });
 
