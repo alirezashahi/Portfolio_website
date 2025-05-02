@@ -2,6 +2,16 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 
+// Debug function to test if the API is working
+export const debugFunction = query({
+  args: {},
+  returns: v.string(),
+  handler: async (ctx) => {
+    console.log("Debug function called");
+    return "Debug function is working!";
+  },
+});
+
 // Get all published blog posts
 export const getPublishedBlogPosts = query({
   args: {},

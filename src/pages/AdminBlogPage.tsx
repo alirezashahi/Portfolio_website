@@ -8,6 +8,9 @@ import { useNavigate } from "react-router-dom";
 type BlogPost = Doc<"blogPosts">;
 
 const AdminBlogPage = () => {
+  // Log the available API functions
+  console.log("Available API functions:", api);
+  
   const allPosts = useQuery(api.blog.getAllBlogPosts);
   const createPost = useMutation(api.blog.createBlogPost);
   const updatePost = useMutation(api.blog.updateBlogPost);
@@ -30,7 +33,16 @@ const AdminBlogPage = () => {
     }
 
     try {
+      console.log("Attempting to save post with data:", {
+        title,
+        slug, 
+        content,
+        summary,
+        isPublished
+      });
+      
       if (editingPost) {
+        console.log("Updating post with ID:", editingPost);
         await updatePost({
           id: editingPost,
           title,
@@ -39,6 +51,7 @@ const AdminBlogPage = () => {
           isPublished,
         });
       } else {
+        console.log("Creating new post");
         await createPost({
           title,
           slug,
@@ -47,6 +60,7 @@ const AdminBlogPage = () => {
           isPublished,
         });
       }
+      console.log("Post saved successfully!");
       resetForm();
       setShowForm(false);
     } catch (error) {

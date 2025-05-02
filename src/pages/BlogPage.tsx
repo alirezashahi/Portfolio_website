@@ -4,11 +4,20 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Doc } from "../../convex/_generated/dataModel";
+import { useEffect } from "react";
 
 type BlogPost = Doc<"blogPosts">;
 
 const BlogPage = () => {
+  console.log("API object:", api);
+  
   const blogPosts = useQuery(api.blog.getPublishedBlogPosts);
+  const debugResult = useQuery(api.blog.debugFunction);
+  
+  useEffect(() => {
+    console.log("Debug function result:", debugResult);
+    console.log("Blog posts:", blogPosts);
+  }, [debugResult, blogPosts]);
 
   const formatDate = (timestamp: number) => {
     return format(new Date(timestamp), "MMMM dd, yyyy");
