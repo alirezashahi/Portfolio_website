@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { Doc, Id } from "../../convex/_generated/dataModel";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { useClerk } from "@clerk/clerk-react";
 
 type BlogPost = Doc<"blogPosts">;
 
@@ -15,7 +16,9 @@ const AdminBlogPage = () => {
     const allPosts = useQuery(api.blog.getAllBlogPosts);
     const createPost = useMutation(api.blog.createBlogPost);
     const updatePost = useMutation(api.blog.updateBlogPost);
+    const generateUploadUrl = useMutation(api.files.generateUploadUrl);
     const navigate = useNavigate();
+    const { signOut } = useClerk();
 
     const [title, setTitle] = useState("");
     const [slug, setSlug] = useState("");
@@ -26,8 +29,18 @@ const AdminBlogPage = () => {
     const [showForm, setShowForm] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     const formRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const handleSignOut = () => {
+      signOut().then(() => {
+        navigate("/");
+      });
+    };
 
     const handleCreateOrUpdatePost = async () => {
       if (!title || !slug || !content) {
@@ -148,9 +161,150 @@ const AdminBlogPage = () => {
       navigate(`/blog/${post.slug}`);
     };
 
+    const handleImageUpload = async () => {
+      if (!fileInputRef.current?.files?.length) return;
+      
+      const file = fileInputRef.current.files[0];
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      try {
+        // 1. Get a URL to upload the image to
+        const uploadUrl = await generateUploadUrl();
+        
+        // 2. Upload the image to the URL
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadUrl);
+        
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(percentComplete);
+          }
+        };
+        
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            // Success - extract URL and insert into content
+            const url = uploadUrl.split("?")[0];
+            
+            // Insert at current cursor position or at the end
+            if (contentTextareaRef.current) {
+              const textarea = contentTextareaRef.current;
+              const cursorPos = textarea.selectionStart;
+              const textBefore = content.substring(0, cursorPos);
+              const textAfter = content.substring(cursorPos);
+              
+              // Insert markdown image syntax
+              const imageMarkdown = `![${file.name}](${url})`;
+              setContent(textBefore + imageMarkdown + textAfter);
+              
+              // Reset after short delay
+              setTimeout(() => {
+                setIsUploading(false);
+                setUploadProgress(0);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }, 1000);
+              
+              // Focus back on textarea and place cursor after inserted image
+              setTimeout(() => {
+                textarea.focus();
+                const newCursorPos = cursorPos + imageMarkdown.length;
+                textarea.setSelectionRange(newCursorPos, newCursorPos);
+              }, 100);
+            }
+          } else {
+            throw new Error("Upload failed with status: " + xhr.status);
+          }
+        };
+        
+        xhr.onerror = () => {
+          throw new Error("Network error during upload");
+        };
+        
+        xhr.send(file);
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        setError(`Failed to upload image: ${error instanceof Error ? error.message : String(error)}`);
+        setIsUploading(false);
+      }
+    };
+
+    const insertTemplate = (template: string) => {
+      if (contentTextareaRef.current) {
+        const textarea = contentTextareaRef.current;
+        const cursorPos = textarea.selectionStart;
+        const textBefore = content.substring(0, cursorPos);
+        const textAfter = content.substring(cursorPos);
+        
+        setContent(textBefore + template + textAfter);
+        
+        // Focus back on textarea and place cursor at a strategic position
+        setTimeout(() => {
+          textarea.focus();
+          const newCursorPos = cursorPos + template.indexOf("▒"); // Place cursor where the special char is
+          const finalContent = textBefore + template.replace("▒", "") + textAfter;
+          setContent(finalContent);
+          textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 50);
+      }
+    };
+
+    const handleInsertMarkdownElement = (type: string) => {
+      switch (type) {
+        case 'h1':
+          insertTemplate("\n# ▒Heading 1\n");
+          break;
+        case 'h2':
+          insertTemplate("\n## ▒Heading 2\n");
+          break;
+        case 'h3':
+          insertTemplate("\n### ▒Heading 3\n");
+          break;
+        case 'bold':
+          insertTemplate("**▒bold text**");
+          break;
+        case 'italic':
+          insertTemplate("*▒italic text*");
+          break;
+        case 'link':
+          insertTemplate("[▒link text](https://example.com)");
+          break;
+        case 'list':
+          insertTemplate("\n- ▒Item 1\n- Item 2\n- Item 3\n");
+          break;
+        case 'code':
+          insertTemplate("\n```\n▒// Your code here\n```\n");
+          break;
+        case 'quote':
+          insertTemplate("\n> ▒Quote goes here\n");
+          break;
+        case 'hr':
+          insertTemplate("\n---\n▒");
+          break;
+        case 'image':
+          // Open file upload dialog
+          fileInputRef.current?.click();
+          break;
+        default:
+          break;
+      }
+    };
+
     return (
       <div className="container mx-auto px-4 py-12 min-h-screen">
-        <h1 className="text-3xl font-bold mb-8">Blog Management</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Blog Management</h1>
+          <button
+            onClick={handleSignOut}
+            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+          </button>
+        </div>
 
         {error && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
@@ -164,10 +318,24 @@ const AdminBlogPage = () => {
               resetForm();
               setShowForm(!showForm);
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center"
             disabled={isSubmitting}
           >
-            {showForm ? "Cancel" : "New Blog Post"}
+            {showForm ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancel
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                New Blog Post
+              </>
+            )}
           </button>
         </div>
 
@@ -233,15 +401,105 @@ const AdminBlogPage = () => {
               
               <div>
                 <label className="block mb-1 font-medium">Content*</label>
+                <div className="mb-2 flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('h1')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="Heading 1"
+                  >
+                    H1
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('h2')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="Heading 2"
+                  >
+                    H2
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('h3')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="Heading 3"
+                  >
+                    H3
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('bold')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="Bold"
+                  >
+                    <strong>B</strong>
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('italic')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="Italic"
+                  >
+                    <em>I</em>
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('link')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="Link"
+                  >
+                    <span className="underline">Link</span>
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('list')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="List"
+                  >
+                    List
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('code')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="Code"
+                  >
+                    Code
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('quote')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="Quote"
+                  >
+                    Quote
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('hr')}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                    title="Horizontal Rule"
+                  >
+                    HR
+                  </button>
+                  <button 
+                    onClick={() => handleInsertMarkdownElement('image')}
+                    className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    title="Insert Image"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? `Uploading ${uploadProgress}%` : 'Image'}
+                  </button>
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
                 <textarea
+                  ref={contentTextareaRef}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                  rows={12}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 font-mono"
+                  rows={16}
                   placeholder="Write your post content in Markdown format"
                   disabled={isSubmitting}
                 ></textarea>
-                <p className="text-xs text-gray-500 mt-1">Supports Markdown formatting</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Supports Markdown formatting. Use the buttons above to insert common elements or upload images.
+                </p>
               </div>
               
               <div className="flex items-center">

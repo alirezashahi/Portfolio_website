@@ -11,7 +11,7 @@ import remarkGfm from "remark-gfm";
 const SafeMarkdown = ({ content }: { content: string }) => {
   try {
     return (
-      <div className="prose dark:prose-invert max-w-none">
+      <div className="prose dark:prose-invert max-w-none prose-img:rounded-xl prose-img:mx-auto prose-headings:text-blue-900 dark:prose-headings:text-blue-200 prose-a:text-blue-600 dark:prose-a:text-blue-400">
         <ReactMarkdown 
           remarkPlugins={[remarkGfm]}
           skipHtml={true}
@@ -136,31 +136,53 @@ const BlogPostPage = () => {
   // Main rendering with error boundary
   try {
     return (
-      <div className="container mx-auto px-4 py-12 min-h-screen">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Link to="/blog" className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 mb-6 hover:underline">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Blog
-          </Link>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className="min-h-screen bg-gray-50 dark:bg-gray-900"
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="max-w-4xl mx-auto">
+            <Link to="/blog" className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 mb-6 hover:underline">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Blog
+            </Link>
 
-          <article className="prose dark:prose-invert lg:prose-lg max-w-none">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">{post.title}</h1>
-            <div className="text-gray-500 dark:text-gray-400 mb-8">
-              {formatDate(post.publishedDate)}
-            </div>
-            
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 md:p-8">
-              <SafeMarkdown content={post.content} />
-            </div>
-          </article>
-        </motion.div>
-      </div>
+            <article>
+              <header className="mb-8">
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                  {post.title}
+                </h1>
+                <div className="text-gray-600 dark:text-gray-400 text-lg">
+                  {formatDate(post.publishedDate)}
+                </div>
+              </header>
+              
+              {post.summary && (
+                <div className="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 mb-8 rounded-r-lg">
+                  <p className="text-lg italic text-gray-700 dark:text-gray-300">{post.summary}</p>
+                </div>
+              )}
+
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mb-8">
+                <SafeMarkdown content={post.content} />
+              </div>
+              
+              <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <Link to="/blog" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Back to all articles
+                </Link>
+              </div>
+            </article>
+          </div>
+        </div>
+      </motion.div>
     );
   } catch (renderError) {
     console.error("Error rendering blog post:", renderError);
