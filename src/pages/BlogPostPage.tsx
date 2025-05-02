@@ -13,7 +13,7 @@ const SafeMarkdown = ({ content }: { content: string }) => {
     return (
       <div className="prose dark:prose-invert max-w-none">
         <ReactMarkdown 
-          remarkPlugins={[remarkGfm]} 
+          remarkPlugins={[remarkGfm]}
           skipHtml={true}
         >
           {content}
