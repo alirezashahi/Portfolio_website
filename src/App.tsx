@@ -8,6 +8,7 @@ import ContactPage from "./pages/ContactPage";
 import BlogPage from "./pages/BlogPage";
 import BlogPostPage from "./pages/BlogPostPage";
 import AdminBlogPage from "./pages/AdminBlogPage";
+import { ProtectedRoute } from "./lib/auth";
 
 function App() {
   return (
@@ -21,7 +22,11 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
-          <Route path="/admin/blog" element={<AdminBlogPage />} />
+          <Route path="/admin/blog" element={
+            <ProtectedRoute>
+              <AdminBlogPage />
+            </ProtectedRoute>
+          } />
         </Routes>
       </Layout>
     </Router>

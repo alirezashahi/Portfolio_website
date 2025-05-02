@@ -1,6 +1,8 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
+import { ConvexError } from "convex/values";
+import { isAdmin } from "./lib/auth";
 
 // Debug function to test if the API is working
 export const debugFunction = query({
@@ -83,12 +85,24 @@ export const getAllBlogPosts = query({
     isPublished: v.boolean(),
   })),
   handler: async (ctx) => {
-    const posts = await ctx.db
-      .query("blogPosts")
-      .order("desc")
-      .collect();
-    
-    return posts;
+    // Check if user is an admin
+    try {
+      const userIsAdmin = await isAdmin(ctx);
+      if (!userIsAdmin) {
+        throw new ConvexError("Unauthorized: Admin access required");
+      }
+      
+      const posts = await ctx.db
+        .query("blogPosts")
+        .order("desc")
+        .collect();
+      
+      return posts;
+    } catch (error) {
+      console.error("Error in getAllBlogPosts:", error);
+      // If unauthorized, return empty array instead of exposing an error
+      return [];
+    }
   },
 });
 
@@ -127,6 +141,18 @@ export const getBlogPostBySlug = query({
         return null;
       }
       
+      // If post is not published, only return it to admins
+      if (!post.isPublished) {
+        try {
+          const userIsAdmin = await isAdmin(ctx);
+          if (!userIsAdmin) {
+            return null; // Don't show unpublished posts to non-admins
+          }
+        } catch (error) {
+          return null; // If auth check fails, don't show the post
+        }
+      }
+      
       console.log("Found post:", post);
       return post;
     } catch (error) {
@@ -147,6 +173,12 @@ export const createBlogPost = mutation({
   },
   returns: v.id("blogPosts"),
   handler: async (ctx, args) => {
+    // Check if user is an admin
+    const userIsAdmin = await isAdmin(ctx);
+    if (!userIsAdmin) {
+      throw new ConvexError("Unauthorized: Admin access required");
+    }
+    
     console.log("Creating blog post with args:", {
       title: args.title,
       slug: args.slug,
@@ -203,6 +235,12 @@ export const updateBlogPost = mutation({
   },
   returns: v.id("blogPosts"),
   handler: async (ctx, args) => {
+    // Check if user is an admin
+    const userIsAdmin = await isAdmin(ctx);
+    if (!userIsAdmin) {
+      throw new ConvexError("Unauthorized: Admin access required");
+    }
+    
     const { id, ...fields } = args;
     
     // If post is being published for the first time, update publishedDate
