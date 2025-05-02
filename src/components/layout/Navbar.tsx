@@ -59,6 +59,13 @@ const Navbar = () => {
             Skills
           </Link>
           <Link 
+            to="/blog" 
+            className="text-foreground hover:text-primary transition-colors"
+            tabIndex={0}
+          >
+            Blog
+          </Link>
+          <Link 
             to="/contact" 
             className="text-foreground hover:text-primary transition-colors"
             tabIndex={0}
@@ -118,6 +125,14 @@ const Navbar = () => {
               tabIndex={0}
             >
               Skills
+            </Link>
+            <Link 
+              to="/blog" 
+              className="text-foreground hover:text-primary transition-colors py-2"
+              onClick={handleToggleMenu}
+              tabIndex={0}
+            >
+              Blog
             </Link>
             <Link 
               to="/contact" 

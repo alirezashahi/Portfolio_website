@@ -8,4 +8,14 @@ export default defineSchema({
     message: v.string(),
     createdAt: v.number(),
   }),
+  blogPosts: defineTable({
+    title: v.string(),
+    slug: v.string(),
+    content: v.string(),
+    summary: v.optional(v.string()),
+    isPublished: v.boolean(),
+    publishedDate: v.number(),
+  }).index("by_slug", ["slug"])
+    .index("by_publishedDate", ["publishedDate"])
+    .index("by_isPublished", ["isPublished"]),
 }); 
