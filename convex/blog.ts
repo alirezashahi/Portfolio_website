@@ -267,4 +267,34 @@ export const updateBlogPost = mutation({
     await ctx.db.patch(id, updatedFields);
     return id;
   },
+});
+
+// Delete a blog post
+export const deleteBlogPost = mutation({
+  args: {
+    id: v.id("blogPosts")
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    // Check if user is an admin
+    const userIsAdmin = await isAdmin(ctx);
+    if (!userIsAdmin) {
+      throw new ConvexError("Unauthorized: Admin access required");
+    }
+    
+    try {
+      // Check if the post exists
+      const post = await ctx.db.get(args.id);
+      if (!post) {
+        throw new ConvexError("Blog post not found");
+      }
+      
+      // Delete the post
+      await ctx.db.delete(args.id);
+      return true;
+    } catch (error) {
+      console.error("Error deleting blog post:", error);
+      throw error;
+    }
+  },
 }); 

@@ -17,6 +17,7 @@ const AdminBlogPage = () => {
     const allPosts = useQuery(api.blog.getAllBlogPosts);
     const createPost = useMutation(api.blog.createBlogPost);
     const updatePost = useMutation(api.blog.updateBlogPost);
+    const deletePost = useMutation(api.blog.deleteBlogPost);
     const generateUploadUrl = useMutation(api.files.generateUploadUrl);
     const storeFileMetadata = useMutation(api.files.storeFileMetadata);
     // We don't need useQuery for getFileUrl here, we'll use the client directly
@@ -345,6 +346,20 @@ const AdminBlogPage = () => {
           break;
         default:
           break;
+      }
+    };
+
+    // Handle delete post
+    const handleDeletePost = async (post: BlogPost) => {
+      if (window.confirm(`Are you sure you want to delete "${post.title}"? This action cannot be undone.`)) {
+        try {
+          console.log("Deleting post:", post._id);
+          await deletePost({ id: post._id });
+          console.log("Post deleted successfully");
+        } catch (error) {
+          console.error("Error deleting post:", error);
+          setError("Failed to delete post. Please try again.");
+        }
       }
     };
 
@@ -680,6 +695,12 @@ const AdminBlogPage = () => {
                             View
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDeletePost(post)}
+                          className="text-red-600 dark:text-red-400 hover:underline"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}
