@@ -11,7 +11,7 @@ import remarkGfm from "remark-gfm";
 const SafeMarkdown = ({ content }: { content: string }) => {
   try {
     return (
-      <div className="prose dark:prose-invert max-w-none prose-img:rounded-xl prose-img:mx-auto prose-headings:text-blue-900 dark:prose-headings:text-blue-200 prose-a:text-blue-600 dark:prose-a:text-blue-400">
+      <div className="prose prose-lg dark:prose-invert max-w-none font-serif prose-img:rounded-xl prose-img:mx-auto prose-headings:text-blue-900 dark:prose-headings:text-blue-200 prose-a:text-blue-600 dark:prose-a:text-blue-400">
         <ReactMarkdown 
           remarkPlugins={[remarkGfm]}
           skipHtml={true}
@@ -143,7 +143,7 @@ const BlogPostPage = () => {
         className="min-h-screen bg-gray-50 dark:bg-gray-900"
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <Link to="/blog" className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 mb-6 hover:underline">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
