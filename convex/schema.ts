@@ -15,6 +15,7 @@ export default defineSchema({
     summary: v.optional(v.string()),
     isPublished: v.boolean(),
     publishedDate: v.number(),
+    imageUrl: v.optional(v.string()),
   }).index("by_slug", ["slug"])
     .index("by_publishedDate", ["publishedDate"])
     .index("by_isPublished", ["isPublished"]),

@@ -49,6 +49,7 @@ export const getPublishedBlogPosts = query({
     summary: v.optional(v.string()),
     publishedDate: v.number(),
     isPublished: v.boolean(),
+    imageUrl: v.optional(v.string()),
   })),
   handler: async (ctx) => {
     console.log("getPublishedBlogPosts called");
@@ -83,6 +84,7 @@ export const getAllBlogPosts = query({
     summary: v.optional(v.string()),
     publishedDate: v.number(),
     isPublished: v.boolean(),
+    imageUrl: v.optional(v.string()),
   })),
   handler: async (ctx) => {
     // Check if user is an admin
@@ -119,6 +121,7 @@ export const getBlogPostBySlug = query({
       summary: v.optional(v.string()),
       publishedDate: v.number(),
       isPublished: v.boolean(),
+      imageUrl: v.optional(v.string()),
     }),
     v.null()
   ),
@@ -170,6 +173,7 @@ export const createBlogPost = mutation({
     content: v.string(),
     summary: v.optional(v.string()),
     isPublished: v.boolean(),
+    imageUrl: v.optional(v.string()),
   },
   returns: v.id("blogPosts"),
   handler: async (ctx, args) => {
@@ -213,6 +217,7 @@ export const createBlogPost = mutation({
         summary: args.summary,
         isPublished: args.isPublished,
         publishedDate: Date.now(),
+        imageUrl: args.imageUrl,
       });
       
       console.log("Blog post created successfully with ID:", postId);
@@ -232,6 +237,7 @@ export const updateBlogPost = mutation({
     content: v.optional(v.string()),
     summary: v.optional(v.string()),
     isPublished: v.optional(v.boolean()),
+    imageUrl: v.optional(v.string()),
   },
   returns: v.id("blogPosts"),
   handler: async (ctx, args) => {
@@ -251,6 +257,7 @@ export const updateBlogPost = mutation({
       summary: string | undefined;
       isPublished: boolean;
       publishedDate: number;
+      imageUrl: string | undefined;
     }> = fields;
     
     if (post && !post.isPublished && args.isPublished) {

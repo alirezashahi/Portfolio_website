@@ -52,6 +52,15 @@ export const listFiles = query({
   },
 });
 
+// Get the URL for a specific file by storageId
+export const getFileUrl = query({
+  args: { storageId: v.id("_storage") },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId);
+  },
+});
+
 // Store file metadata after upload
 export const storeFileMetadata = mutation({
   args: {

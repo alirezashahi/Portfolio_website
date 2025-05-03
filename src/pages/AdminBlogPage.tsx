@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react"; // Import useConvex instead
 import { api } from "../../convex/_generated/api";
 import { Doc, Id } from "../../convex/_generated/dataModel";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useClerk } from "@clerk/clerk-react";
+import { useEffect } from "react"; // Import useEffect
 
 type BlogPost = Doc<"blogPosts">;
 
@@ -18,8 +19,18 @@ const AdminBlogPage = () => {
     const updatePost = useMutation(api.blog.updateBlogPost);
     const generateUploadUrl = useMutation(api.files.generateUploadUrl);
     const storeFileMetadata = useMutation(api.files.storeFileMetadata);
+    // We don't need useQuery for getFileUrl here, we'll use the client directly
     const navigate = useNavigate();
     const { signOut } = useClerk();
+    const convex = useConvex(); // Use useConvex() to get the client instance
+    const storedFiles = useQuery(api.files.listFiles); // Fetch list of files
+
+    // Temporary useEffect to log stored files for debugging
+    useEffect(() => {
+      if (storedFiles) {
+        console.log("Stored Files List:", storedFiles);
+      }
+    }, [storedFiles]);
 
     const [title, setTitle] = useState("");
     const [slug, setSlug] = useState("");
@@ -188,59 +199,58 @@ const AdminBlogPage = () => {
         
         xhr.onload = async () => {
           if (xhr.status === 200 || xhr.status === 201) {
-            // Success - get the file URL without query parameters
-            const fileUrl = uploadUrl.split("?")[0];
-            
+            // Success - Extract storageId from response
+            let storageId: Id<"_storage"> | null = null;
             try {
-              // In Convex, when you upload a file successfully using a signed URL,
-              // the storage ID is returned in the response text as JSON
-              let storageId;
-              try {
-                // Try to parse the response to get the storageId
-                const responseData = JSON.parse(xhr.responseText);
-                storageId = responseData.storageId;
+              const responseData = JSON.parse(xhr.responseText);
+              if (responseData.storageId) {
+                storageId = responseData.storageId as Id<"_storage">;
                 console.log("Storage ID from response:", storageId);
-              } catch (e) {
-                console.error("Error parsing response:", e);
-                // Fallback: If we can't parse the response, extract the ID from the URL
-                // but SKIP the "upload" part which is causing the error
-                const parts = fileUrl.split('/');
-                // We need the ID which is the part after "upload"
-                // Find the index of "upload" and get the part after it
-                const uploadIndex = parts.indexOf("upload");
-                if (uploadIndex !== -1 && uploadIndex < parts.length - 1) {
-                  storageId = parts[uploadIndex + 1];
-                } else {
-                  // If we can't find it, use the last part (but not if it's "upload")
-                  const lastPart = parts[parts.length - 1];
-                  storageId = lastPart === "upload" ? parts[parts.length - 2] : lastPart;
-                }
-                console.log("Storage ID fallback from URL:", storageId);
+              } else {
+                throw new Error("storageId not found in response JSON");
               }
-              
-              if (!storageId) {
-                throw new Error("Could not determine storage ID for uploaded file");
-              }
-              
-              // Store the file metadata
+            } catch (e) {
+              console.error("Error parsing upload response or missing storageId:", e);
+              setError(`File uploaded, but failed to get storage ID: ${e instanceof Error ? e.message : String(e)}`);
+              setIsUploading(false);
+              return; // Stop processing if we can't get the ID
+            }
+
+            if (!storageId) {
+              setError("File uploaded, but could not determine storage ID.");
+              setIsUploading(false);
+              return;
+            }
+
+            try {
+              // Store the file metadata (optional, but good practice)
               await storeFileMetadata({
-                storageId,
+                storageId: storageId, // Pass the validated ID
                 filename: file.name,
                 contentType: file.type,
-                description: `Image uploaded for blog post`
+                description: `Image uploaded for blog post`,
               });
-              
+              console.log("File metadata stored successfully for:", storageId);
+
+              // Get the permanent retrieval URL using the new query
+              const retrievalUrl = await convex.query(api.files.getFileUrl, { storageId });
+
+              if (!retrievalUrl) {
+                throw new Error("Could not retrieve file URL after upload.");
+              }
+              console.log("Got retrieval URL:", retrievalUrl);
+
               // Insert at current cursor position or at the end
               if (contentTextareaRef.current) {
                 const textarea = contentTextareaRef.current;
                 const cursorPos = textarea.selectionStart;
                 const textBefore = content.substring(0, cursorPos);
                 const textAfter = content.substring(cursorPos);
-                
-                // Insert markdown image syntax
-                const imageMarkdown = `![${file.name}](${fileUrl})`;
+
+                // Insert markdown image syntax WITH THE CORRECT URL
+                const imageMarkdown = `![${file.name}](${retrievalUrl})`;
                 setContent(textBefore + imageMarkdown + textAfter);
-                
+
                 // Reset after short delay
                 setTimeout(() => {
                   setIsUploading(false);
@@ -702,4 +712,4 @@ const AdminBlogPage = () => {
   }
 };
 
-export default AdminBlogPage; 
+export default AdminBlogPage;

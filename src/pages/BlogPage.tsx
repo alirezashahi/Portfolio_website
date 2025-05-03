@@ -11,6 +11,7 @@ interface BlogPost {
   slug: string;
   publishedDate: number;
   summary?: string;
+  imageUrl?: string;
 }
 
 // Define a type for possible response formats
