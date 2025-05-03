@@ -17,6 +17,7 @@ const AdminBlogPage = () => {
     const createPost = useMutation(api.blog.createBlogPost);
     const updatePost = useMutation(api.blog.updateBlogPost);
     const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+    const storeFileMetadata = useMutation(api.files.storeFileMetadata);
     const navigate = useNavigate();
     const { signOut } = useClerk();
 
@@ -171,10 +172,12 @@ const AdminBlogPage = () => {
       try {
         // 1. Get a URL to upload the image to
         const uploadUrl = await generateUploadUrl();
+        console.log("Got upload URL:", uploadUrl);
         
         // 2. Upload the image to the URL
         const xhr = new XMLHttpRequest();
-        xhr.open("PUT", uploadUrl);
+        xhr.open("POST", uploadUrl); // Changed from PUT to POST
+        xhr.setRequestHeader("Content-Type", file.type);
         
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
@@ -183,35 +186,79 @@ const AdminBlogPage = () => {
           }
         };
         
-        xhr.onload = () => {
-          if (xhr.status === 200) {
-            // Success - extract URL and insert into content
-            const url = uploadUrl.split("?")[0];
+        xhr.onload = async () => {
+          if (xhr.status === 200 || xhr.status === 201) {
+            // Success - get the file URL without query parameters
+            const fileUrl = uploadUrl.split("?")[0];
             
-            // Insert at current cursor position or at the end
-            if (contentTextareaRef.current) {
-              const textarea = contentTextareaRef.current;
-              const cursorPos = textarea.selectionStart;
-              const textBefore = content.substring(0, cursorPos);
-              const textAfter = content.substring(cursorPos);
+            try {
+              // In Convex, when you upload a file successfully using a signed URL,
+              // the storage ID is returned in the response text as JSON
+              let storageId;
+              try {
+                // Try to parse the response to get the storageId
+                const responseData = JSON.parse(xhr.responseText);
+                storageId = responseData.storageId;
+                console.log("Storage ID from response:", storageId);
+              } catch (e) {
+                console.error("Error parsing response:", e);
+                // Fallback: If we can't parse the response, extract the ID from the URL
+                // but SKIP the "upload" part which is causing the error
+                const parts = fileUrl.split('/');
+                // We need the ID which is the part after "upload"
+                // Find the index of "upload" and get the part after it
+                const uploadIndex = parts.indexOf("upload");
+                if (uploadIndex !== -1 && uploadIndex < parts.length - 1) {
+                  storageId = parts[uploadIndex + 1];
+                } else {
+                  // If we can't find it, use the last part (but not if it's "upload")
+                  const lastPart = parts[parts.length - 1];
+                  storageId = lastPart === "upload" ? parts[parts.length - 2] : lastPart;
+                }
+                console.log("Storage ID fallback from URL:", storageId);
+              }
               
-              // Insert markdown image syntax
-              const imageMarkdown = `![${file.name}](${url})`;
-              setContent(textBefore + imageMarkdown + textAfter);
+              if (!storageId) {
+                throw new Error("Could not determine storage ID for uploaded file");
+              }
               
-              // Reset after short delay
-              setTimeout(() => {
-                setIsUploading(false);
-                setUploadProgress(0);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-              }, 1000);
+              // Store the file metadata
+              await storeFileMetadata({
+                storageId,
+                filename: file.name,
+                contentType: file.type,
+                description: `Image uploaded for blog post`
+              });
               
-              // Focus back on textarea and place cursor after inserted image
-              setTimeout(() => {
-                textarea.focus();
-                const newCursorPos = cursorPos + imageMarkdown.length;
-                textarea.setSelectionRange(newCursorPos, newCursorPos);
-              }, 100);
+              // Insert at current cursor position or at the end
+              if (contentTextareaRef.current) {
+                const textarea = contentTextareaRef.current;
+                const cursorPos = textarea.selectionStart;
+                const textBefore = content.substring(0, cursorPos);
+                const textAfter = content.substring(cursorPos);
+                
+                // Insert markdown image syntax
+                const imageMarkdown = `![${file.name}](${fileUrl})`;
+                setContent(textBefore + imageMarkdown + textAfter);
+                
+                // Reset after short delay
+                setTimeout(() => {
+                  setIsUploading(false);
+                  setUploadProgress(0);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }, 1000);
+                
+                // Focus back on textarea and place cursor after inserted image
+                setTimeout(() => {
+                  textarea.focus();
+                  const newCursorPos = cursorPos + imageMarkdown.length;
+                  textarea.setSelectionRange(newCursorPos, newCursorPos);
+                }, 100);
+              }
+            } catch (metadataError) {
+              console.error("Error storing file metadata:", metadataError);
+              setError(`File uploaded but could not store metadata: ${metadataError instanceof Error ? metadataError.message : String(metadataError)}`);
+              setIsUploading(false);
             }
           } else {
             throw new Error("Upload failed with status: " + xhr.status);

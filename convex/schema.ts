@@ -18,4 +18,13 @@ export default defineSchema({
   }).index("by_slug", ["slug"])
     .index("by_publishedDate", ["publishedDate"])
     .index("by_isPublished", ["isPublished"]),
+  
+  // Add storageFiles table for handling uploaded files
+  storageFiles: defineTable({
+    storageId: v.id("_storage"),
+    filename: v.string(),
+    contentType: v.string(),
+    description: v.optional(v.string()),
+    uploadedAt: v.number(),
+  }),
 }); 

@@ -13,7 +13,10 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as auth from "../auth.js";
 import type * as blog from "../blog.js";
+import type * as files from "../files.js";
+import type * as lib_auth from "../lib/auth.js";
 import type * as messages from "../messages.js";
 
 /**
@@ -25,7 +28,10 @@ import type * as messages from "../messages.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  auth: typeof auth;
   blog: typeof blog;
+  files: typeof files;
+  "lib/auth": typeof lib_auth;
   messages: typeof messages;
 }>;
 export declare const api: FilterApi<

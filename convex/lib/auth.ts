@@ -32,15 +32,26 @@ export async function isAdmin(ctx: QueryCtx | MutationCtx): Promise<boolean> {
     const identity = await ctx.auth.getUserIdentity();
     
     if (!identity) {
-      throw new ConvexError("Not authenticated");
+      return false;
     }
     
+    // Administrator email domains
+    const adminDomains = [
+      "yourdomain.com",
+      "gmail.com", // For testing purposes
+      "hotmail.com" // For testing purposes
+      // Add your admin domains here
+    ];
+
     // Check if the email is from an admin domain
-    if (identity.email && identity.email.endsWith("@yourdomain.com")) {
-      return true;
+    if (identity.email) {
+      const emailDomain = identity.email.split('@')[1];
+      if (adminDomains.includes(emailDomain)) {
+        return true;
+      }
     }
     
-    // Look for admin role in metadata
+    // Check for admin role in metadata
     const metadata = identity.metadata;
     if (metadata) {
       // Use type assertion to help TypeScript understand the structure
@@ -48,6 +59,15 @@ export async function isAdmin(ctx: QueryCtx | MutationCtx): Promise<boolean> {
       if (metadataObj.role === "admin") {
         return true;
       }
+    }
+    
+    // For development purposes, can add specific user IDs here
+    const adminUserIds: string[] = [
+      // Add your admin user IDs here
+    ];
+    
+    if (adminUserIds.includes(identity.subject)) {
+      return true;
     }
     
     return false;

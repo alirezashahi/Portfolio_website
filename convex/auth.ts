@@ -1,8 +1,16 @@
 import { ConvexError } from "convex/values";
+import { isAdmin } from "./lib/auth";
+import { QueryCtx, MutationCtx } from "./_generated/server";
 
-// Simple admin check function 
-export async function requireAdmin(ctx: any) {
-  // You can implement more sophisticated admin checks later
-  // For now, we'll just allow all requests to fix the immediate issue
+// Admin check function that throws an error if the user is not an admin
+export async function requireAdmin(
+  ctx: QueryCtx | MutationCtx
+) {
+  const isUserAdmin = await isAdmin(ctx);
+  
+  if (!isUserAdmin) {
+    throw new ConvexError("Access denied. Admin privileges required.");
+  }
+  
   return true;
 } 

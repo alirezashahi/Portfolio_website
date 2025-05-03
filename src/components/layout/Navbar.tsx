@@ -1,10 +1,19 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { Button } from "../ui/button";
+import { useUser, useClerk } from "@clerk/clerk-react";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isSignedIn, user } = useUser();
+  const { signOut } = useClerk();
+
+  // Check if user is an admin
+  const isAdmin = isSignedIn && (
+    user?.primaryEmailAddress?.emailAddress.endsWith('@yourdomain.com') || 
+    user?.publicMetadata?.role === 'admin'
+  );
 
   const handleToggleMenu = () => {
     setIsMenuOpen((prev) => !prev);
@@ -14,6 +23,13 @@ const Navbar = () => {
     if (e.key === "Enter" || e.key === " ") {
       handleToggleMenu();
     }
+  };
+
+  const handleSignOut = () => {
+    signOut().then(() => {
+      // Redirect to home after sign out
+      window.location.href = '/';
+    });
   };
 
   return (
@@ -72,6 +88,30 @@ const Navbar = () => {
           >
             Contact
           </Link>
+          
+          {/* Admin link - only visible for admins */}
+          {isAdmin && (
+            <Link 
+              to="/admin/blog" 
+              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              tabIndex={0}
+            >
+              Admin
+            </Link>
+          )}
+          
+          {/* Logout button - only visible when signed in */}
+          {isSignedIn && (
+            <button
+              onClick={handleSignOut}
+              className="flex items-center text-red-500 hover:text-red-600 transition-colors"
+              tabIndex={0}
+              aria-label="Sign out"
+            >
+              <LogOut className="h-4 w-4 mr-1" />
+              Logout
+            </button>
+          )}
         </div>
 
         {/* Mobile Navigation Toggle */}
@@ -142,6 +182,34 @@ const Navbar = () => {
             >
               Contact
             </Link>
+            
+            {/* Admin link - only visible for admins */}
+            {isAdmin && (
+              <Link 
+                to="/admin/blog" 
+                className="text-blue-600 hover:text-blue-700 font-medium transition-colors py-2"
+                onClick={handleToggleMenu}
+                tabIndex={0}
+              >
+                Admin
+              </Link>
+            )}
+            
+            {/* Logout button - only visible when signed in */}
+            {isSignedIn && (
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  handleToggleMenu();
+                }}
+                className="flex items-center text-red-500 hover:text-red-600 transition-colors py-2"
+                tabIndex={0}
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4 mr-1" />
+                Logout
+              </button>
+            )}
           </div>
         </div>
       )}
