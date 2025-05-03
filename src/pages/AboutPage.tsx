@@ -1,7 +1,16 @@
 import { Download, Mail, Phone, Linkedin } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 
 const AboutPage = () => {
+  // Define the CV storage ID
+  const cvStorageId = "kg28wwh9dg6jmq6gzxnx18r3yd7f7b1y" as unknown as Id<"_storage">;
+  
+  // Get the download URL for the CV
+  const cvUrl = useQuery(api.files.getFileUrl, { storageId: cvStorageId });
+  
   return (
     <div className="container mx-auto px-4">
       <section className="py-12 md:py-16 max-w-5xl mx-auto">
@@ -62,10 +71,29 @@ const AboutPage = () => {
             </div>
             
             <div className="mt-6">
-              <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                <Download className="h-4 w-4" />
-                <span>Download CV</span>
-              </Button>
+              {cvUrl === undefined ? (
+                <Button variant="outline" size="sm" className="flex items-center space-x-2" disabled>
+                  <Download className="h-4 w-4" />
+                  <span>Loading CV...</span>
+                </Button>
+              ) : cvUrl === null ? (
+                <Button variant="outline" size="sm" className="flex items-center space-x-2" disabled>
+                  <Download className="h-4 w-4" />
+                  <span>CV Unavailable</span>
+                </Button>
+              ) : (
+                <a 
+                  href={cvUrl} 
+                  download="Alireza_Shahi_CV.pdf"
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                    <Download className="h-4 w-4" />
+                    <span>Download CV</span>
+                  </Button>
+                </a>
+              )}
             </div>
           </div>
           
