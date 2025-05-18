@@ -10,7 +10,7 @@ import ImageUploader from "../components/admin/ImageUploader";
 type Project = Doc<"projects">;
 
 const AdminProjectsPage = () => {
-  const allProjects = useQuery(api.projects.getProjects);
+  const allProjects = useQuery(api.projects.getAllProjects);
   const createProject = useMutation(api.projects.createProject);
   const updateProject = useMutation(api.projects.updateProject);
   const deleteProject = useMutation(api.projects.deleteProject);

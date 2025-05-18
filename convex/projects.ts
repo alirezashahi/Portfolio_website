@@ -1,5 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { ConvexError } from "convex/values";
+import { isAdmin } from "./lib/auth";
 
 // Get all published projects
 export const getProjects = query({
@@ -10,6 +12,31 @@ export const getProjects = query({
       .collect();
     
     return projects;
+  },
+});
+
+// Get all projects (for admin)
+export const getAllProjects = query({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      // Check if user is an admin
+      const userIsAdmin = await isAdmin(ctx);
+      if (!userIsAdmin) {
+        throw new ConvexError("Unauthorized: Admin access required");
+      }
+      
+      const projects = await ctx.db
+        .query("projects")
+        .order("desc")
+        .collect();
+      
+      return projects;
+    } catch (error) {
+      console.error("Error in getAllProjects:", error);
+      // If unauthorized, return empty array instead of exposing an error
+      return [];
+    }
   },
 });
 
