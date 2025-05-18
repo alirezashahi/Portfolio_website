@@ -61,3 +61,4 @@ Make sure to set up the same environment variables in your deployment environmen
 - The admin blog page is protected both on the client side (with the ProtectedRoute component) and on the server side (with Convex functions checking for admin status).
 - All mutations related to blog posts can only be performed by authenticated admin users.
 - The webhook integration ensures Clerk user data stays in sync with your application.
+- add admin projects page and admin page.
