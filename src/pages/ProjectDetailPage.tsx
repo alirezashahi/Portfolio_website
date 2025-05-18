@@ -3,6 +3,25 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { ChevronLeft, ExternalLink, Github, Video, FileText } from "lucide-react";
 import Carousel from "../components/ui/carousel";
+import ReactMarkdown from "react-markdown";
+
+// Add a simple error boundary for the markdown rendering
+const SafeMarkdown = ({ content }: { content: string }) => {
+  try {
+    return (
+      <ReactMarkdown>
+        {content}
+      </ReactMarkdown>
+    );
+  } catch (error) {
+    console.error("Error rendering markdown:", error);
+    return (
+      <div className="markdown-error">
+        {content}
+      </div>
+    );
+  }
+};
 
 const ProjectDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -45,7 +64,9 @@ const ProjectDetailPage = () => {
         <h1 className="text-4xl md:text-5xl font-bold mb-4">{project.title}</h1>
         
         {/* Subtitle/Elevator Pitch */}
-        <p className="text-xl text-primary mb-8">{project.subtitle}</p>
+        <div className="text-xl text-primary mb-8 prose">
+          <SafeMarkdown content={project.subtitle} />
+        </div>
         
         {/* Image Carousel */}
         <div className="mb-12">
@@ -60,7 +81,7 @@ const ProjectDetailPage = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Overview</h2>
               <div className="prose prose-lg max-w-none">
-                <p>{project.overview}</p>
+                <SafeMarkdown content={project.overview} />
               </div>
             </section>
             
@@ -79,7 +100,7 @@ const ProjectDetailPage = () => {
               <section>
                 <h2 className="text-2xl font-semibold mb-4">The Process</h2>
                 <div className="prose prose-lg max-w-none">
-                  <p>{project.process}</p>
+                  <SafeMarkdown content={project.process} />
                 </div>
               </section>
             )}
@@ -88,7 +109,7 @@ const ProjectDetailPage = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Challenges & Solutions</h2>
               <div className="prose prose-lg max-w-none">
-                <p>{project.challenges}</p>
+                <SafeMarkdown content={project.challenges} />
               </div>
             </section>
             
@@ -96,7 +117,7 @@ const ProjectDetailPage = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Outcomes</h2>
               <div className="prose prose-lg max-w-none">
-                <p>{project.outcomes}</p>
+                <SafeMarkdown content={project.outcomes} />
               </div>
             </section>
           </div>
@@ -106,7 +127,9 @@ const ProjectDetailPage = () => {
             {/* Your Role and Responsibilities */}
             <section className="bg-secondary/20 p-6 rounded-lg">
               <h2 className="text-xl font-semibold mb-3">My Role</h2>
-              <p>{project.role}</p>
+              <div className="prose">
+                <SafeMarkdown content={project.role} />
+              </div>
             </section>
             
             {/* Technologies & Tools Used */}

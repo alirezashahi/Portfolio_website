@@ -5,6 +5,7 @@ import AboutPage from "./pages/AboutPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import AdminProjectsPage from "./pages/AdminProjectsPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import SkillsPage from "./pages/SkillsPage";
 import ContactPage from "./pages/ContactPage";
 import BlogPage from "./pages/BlogPage";
@@ -25,6 +26,11 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminDashboardPage />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/blog" element={
             <ProtectedRoute>
               <AdminBlogPage />

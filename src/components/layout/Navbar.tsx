@@ -92,7 +92,7 @@ const Navbar = () => {
           {/* Admin link - only visible for admins */}
           {isAdmin && (
             <Link 
-              to="/admin/blog" 
+              to="/admin" 
               className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
               tabIndex={0}
             >
@@ -186,7 +186,7 @@ const Navbar = () => {
             {/* Admin link - only visible for admins */}
             {isAdmin && (
               <Link 
-                to="/admin/blog" 
+                to="/admin" 
                 className="text-blue-600 hover:text-blue-700 font-medium transition-colors py-2"
                 onClick={handleToggleMenu}
                 tabIndex={0}

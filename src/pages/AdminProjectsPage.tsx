@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { useQuery, useMutation, useConvex } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Doc, Id } from "../../convex/_generated/dataModel";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useClerk } from "@clerk/clerk-react";
+import ImageUploader from "../components/admin/ImageUploader";
 
 type Project = Doc<"projects">;
 
@@ -13,12 +14,9 @@ const AdminProjectsPage = () => {
   const createProject = useMutation(api.projects.createProject);
   const updateProject = useMutation(api.projects.updateProject);
   const deleteProject = useMutation(api.projects.deleteProject);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const storeFileMetadata = useMutation(api.files.storeFileMetadata);
   
   const navigate = useNavigate();
   const { signOut } = useClerk();
-  const convex = useConvex();
   
   // Form state
   const [title, setTitle] = useState("");
@@ -51,10 +49,14 @@ const AdminProjectsPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   
   const formRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const overviewRef = useRef<HTMLTextAreaElement>(null);
+  const roleRef = useRef<HTMLTextAreaElement>(null);
+  const processRef = useRef<HTMLTextAreaElement>(null);
+  const challengesRef = useRef<HTMLTextAreaElement>(null);
+  const outcomesRef = useRef<HTMLTextAreaElement>(null);
+  const subtitleRef = useRef<HTMLTextAreaElement>(null);
   
   const handleSignOut = () => {
     signOut().then(() => {
@@ -222,7 +224,7 @@ const AdminProjectsPage = () => {
     setTechnologies(technologies.filter((_, i) => i !== index));
   };
   
-  const handleAddImage = async () => {
+  const handleAddImage = () => {
     if (!imageUrl.trim() || !imageAlt.trim()) {
       setError("Image URL and alt text are required");
       return;
@@ -244,6 +246,16 @@ const AdminProjectsPage = () => {
     setImages(images.filter((_, i) => i !== index));
   };
   
+  const handleUploadedImage = (url: string, alt: string, caption?: string) => {
+    const newImage = {
+      url,
+      alt,
+      caption
+    };
+    
+    setImages([...images, newImage]);
+  };
+  
   const handleUpdateLinks = (key: 'liveDemo' | 'github' | 'video' | 'slides', value: string) => {
     setLinks({
       ...links,
@@ -253,6 +265,70 @@ const AdminProjectsPage = () => {
   
   const handlePreview = (project: Project) => {
     navigate(`/projects/${project.slug}`);
+  };
+  
+  const insertMarkdown = (type: string, fieldSetter: (value: string) => void, currentValue: string, textareaRef: React.RefObject<HTMLTextAreaElement>) => {
+    if (!textareaRef.current) return;
+    
+    const textarea = textareaRef.current;
+    const selectionStart = textarea.selectionStart;
+    const selectionEnd = textarea.selectionEnd;
+    const textBefore = currentValue.substring(0, selectionStart);
+    const selectedText = currentValue.substring(selectionStart, selectionEnd);
+    const textAfter = currentValue.substring(selectionEnd);
+    
+    let template = "";
+    let newCursorPos = selectionStart;
+    
+    switch (type) {
+      case 'h1':
+        template = `\n# ${selectedText || "Heading 1"}\n`;
+        break;
+      case 'h2':
+        template = `\n## ${selectedText || "Heading 2"}\n`;
+        break;
+      case 'h3':
+        template = `\n### ${selectedText || "Heading 3"}\n`;
+        break;
+      case 'bold':
+        template = `**${selectedText || "bold text"}**`;
+        break;
+      case 'italic':
+        template = `*${selectedText || "italic text"}*`;
+        break;
+      case 'link':
+        template = `[${selectedText || "link text"}](https://example.com)`;
+        break;
+      case 'list':
+        template = `\n- ${selectedText || "Item 1"}\n- Item 2\n- Item 3\n`;
+        break;
+      case 'code':
+        template = `\n\`\`\`\n${selectedText || "// Your code here"}\n\`\`\`\n`;
+        break;
+      case 'quote':
+        template = `\n> ${selectedText || "Quote goes here"}\n`;
+        break;
+      case 'hr':
+        template = `\n---\n`;
+        break;
+      default:
+        break;
+    }
+    
+    const newText = textBefore + template + textAfter;
+    fieldSetter(newText);
+    
+    // Set cursor position after update
+    setTimeout(() => {
+      textarea.focus();
+      if (selectedText) {
+        newCursorPos = textBefore.length + template.length;
+      } else {
+        // Place cursor in the middle of the template if there was no selection
+        newCursorPos = textBefore.length + template.indexOf(selectedText || "H") + 1;
+      }
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 50);
   };
   
   return (
@@ -354,8 +430,29 @@ const AdminProjectsPage = () => {
             
             <div>
               <label className="block mb-1 font-medium">Subtitle/Elevator Pitch*</label>
-              <input
-                type="text"
+              <div className="mb-1 text-sm text-gray-500">
+                Supports Markdown formatting
+              </div>
+              <div className="mb-2 flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                <button 
+                  onClick={() => insertMarkdown('bold', setSubtitle, subtitle, subtitleRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Bold"
+                  type="button"
+                >
+                  B
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('italic', setSubtitle, subtitle, subtitleRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Italic"
+                  type="button"
+                >
+                  I
+                </button>
+              </div>
+              <textarea
+                ref={subtitleRef}
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
@@ -376,13 +473,71 @@ const AdminProjectsPage = () => {
                 <option value="book">Book</option>
                 <option value="chart">Chart</option>
                 <option value="building">Building</option>
+                <option value="code">Code</option>
+                <option value="database">Database</option>
+                <option value="globe">Globe</option>
+                <option value="server">Server</option>
+                <option value="settings">Settings</option>
+                <option value="smartphone">Smartphone</option>
+                <option value="desktop">Desktop</option>
+                <option value="cloud">Cloud</option>
+                <option value="analytics">Analytics</option>
+                <option value="robot">Robot</option>
+                <option value="ai">AI</option>
+                <option value="brain">Brain</option>
               </select>
             </div>
             
             {/* Content Sections */}
             <div>
               <label className="block mb-1 font-medium">Overview/Problem Statement*</label>
+              <div className="mb-1 text-sm text-gray-500">
+                Supports Markdown formatting (headings, lists, bold, etc)
+              </div>
+              <div className="mb-2 flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                <button 
+                  onClick={() => insertMarkdown('h2', setOverview, overview, overviewRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Heading 2"
+                  type="button"
+                >
+                  H2
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('bold', setOverview, overview, overviewRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Bold"
+                  type="button"
+                >
+                  B
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('italic', setOverview, overview, overviewRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Italic"
+                  type="button"
+                >
+                  I
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('list', setOverview, overview, overviewRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="List"
+                  type="button"
+                >
+                  • List
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('quote', setOverview, overview, overviewRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Quote"
+                  type="button"
+                >
+                  " Quote
+                </button>
+              </div>
               <textarea
+                ref={overviewRef}
                 value={overview}
                 onChange={(e) => setOverview(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
@@ -394,7 +549,29 @@ const AdminProjectsPage = () => {
             
             <div>
               <label className="block mb-1 font-medium">Your Role and Responsibilities*</label>
+              <div className="mb-1 text-sm text-gray-500">
+                Supports Markdown formatting
+              </div>
+              <div className="mb-2 flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                <button 
+                  onClick={() => insertMarkdown('bold', setRole, role, roleRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Bold"
+                  type="button"
+                >
+                  B
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('list', setRole, role, roleRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="List"
+                  type="button"
+                >
+                  • List
+                </button>
+              </div>
               <textarea
+                ref={roleRef}
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
@@ -491,7 +668,37 @@ const AdminProjectsPage = () => {
             {/* Process */}
             <div>
               <label className="block mb-1 font-medium">The Process / Approach (optional)</label>
+              <div className="mb-1 text-sm text-gray-500">
+                Supports Markdown formatting
+              </div>
+              <div className="mb-2 flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                <button 
+                  onClick={() => insertMarkdown('h3', setProcess, process, processRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Heading 3"
+                  type="button"
+                >
+                  H3
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('bold', setProcess, process, processRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Bold"
+                  type="button"
+                >
+                  B
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('list', setProcess, process, processRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="List"
+                  type="button"
+                >
+                  • List
+                </button>
+              </div>
               <textarea
+                ref={processRef}
                 value={process}
                 onChange={(e) => setProcess(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
@@ -504,7 +711,37 @@ const AdminProjectsPage = () => {
             {/* Challenges */}
             <div>
               <label className="block mb-1 font-medium">Challenges & Solutions*</label>
+              <div className="mb-1 text-sm text-gray-500">
+                Supports Markdown formatting
+              </div>
+              <div className="mb-2 flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                <button 
+                  onClick={() => insertMarkdown('h3', setChallenges, challenges, challengesRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Heading 3"
+                  type="button"
+                >
+                  H3
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('bold', setChallenges, challenges, challengesRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Bold"
+                  type="button"
+                >
+                  B
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('list', setChallenges, challenges, challengesRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="List"
+                  type="button"
+                >
+                  • List
+                </button>
+              </div>
               <textarea
+                ref={challengesRef}
                 value={challenges}
                 onChange={(e) => setChallenges(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
@@ -517,7 +754,37 @@ const AdminProjectsPage = () => {
             {/* Outcomes */}
             <div>
               <label className="block mb-1 font-medium">Results & Impact / Outcomes*</label>
+              <div className="mb-1 text-sm text-gray-500">
+                Supports Markdown formatting
+              </div>
+              <div className="mb-2 flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-700 p-2 rounded-lg">
+                <button 
+                  onClick={() => insertMarkdown('h3', setOutcomes, outcomes, outcomesRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Heading 3"
+                  type="button"
+                >
+                  H3
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('bold', setOutcomes, outcomes, outcomesRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="Bold"
+                  type="button"
+                >
+                  B
+                </button>
+                <button 
+                  onClick={() => insertMarkdown('list', setOutcomes, outcomes, outcomesRef)}
+                  className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+                  title="List"
+                  type="button"
+                >
+                  • List
+                </button>
+              </div>
               <textarea
+                ref={outcomesRef}
                 value={outcomes}
                 onChange={(e) => setOutcomes(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
@@ -530,7 +797,7 @@ const AdminProjectsPage = () => {
             {/* Images */}
             <div>
               <label className="block mb-1 font-medium">Project Images</label>
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <input
                     type="text"
@@ -557,15 +824,22 @@ const AdminProjectsPage = () => {
                     disabled={isSubmitting}
                   />
                 </div>
-                <button
-                  onClick={handleAddImage}
-                  className="bg-blue-500 text-white px-3 py-2 rounded-lg"
-                  disabled={!imageUrl.trim() || !imageAlt.trim() || isSubmitting}
-                >
-                  Add Image
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleAddImage}
+                    className="bg-blue-500 text-white px-3 py-2 rounded-lg"
+                    disabled={!imageUrl.trim() || !imageAlt.trim() || isSubmitting}
+                  >
+                    Add Image URL
+                  </button>
+                  <span className="text-gray-500 dark:text-gray-400 px-2 py-2">or</span>
+                  <ImageUploader 
+                    onImageUploaded={handleUploadedImage}
+                    disabled={isSubmitting}
+                  />
+                </div>
               </div>
-              
+
               {images.length > 0 && (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {images.map((image, index) => (
