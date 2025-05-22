@@ -12,8 +12,8 @@ const AboutPage = () => {
   const cvUrl = useQuery(api.files.getFileUrl, { storageId: cvStorageId });
   
   return (
-    <div className="container mx-auto px-4">
-      <section className="py-12 md:py-16 max-w-5xl mx-auto">
+    <div className="container mx-auto px-4 pt-20">
+      <section className="py-8 md:py-12 max-w-5xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">About Me</h1>
         
         <div className="space-y-12">

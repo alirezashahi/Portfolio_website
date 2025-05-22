@@ -33,11 +33,11 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-background shadow-sm fixed w-full z-10">
+    <nav className="bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 fixed w-full z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link 
           to="/" 
-          className="text-xl font-semibold text-primary"
+          className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors"
           tabIndex={0}
           aria-label="Alireza Shahi, go to homepage"
         >
@@ -48,42 +48,42 @@ const Navbar = () => {
         <div className="hidden md:flex items-center space-x-6">
           <Link 
             to="/" 
-            className="text-foreground hover:text-primary transition-colors"
+            className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
             tabIndex={0}
           >
             Home
           </Link>
           <Link 
             to="/about" 
-            className="text-foreground hover:text-primary transition-colors"
+            className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
             tabIndex={0}
           >
             About Me
           </Link>
           <Link 
             to="/projects" 
-            className="text-foreground hover:text-primary transition-colors"
+            className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
             tabIndex={0}
           >
             Projects
           </Link>
           <Link 
             to="/skills" 
-            className="text-foreground hover:text-primary transition-colors"
+            className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
             tabIndex={0}
           >
             Skills
           </Link>
           <Link 
             to="/blog" 
-            className="text-foreground hover:text-primary transition-colors"
+            className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
             tabIndex={0}
           >
             Blog
           </Link>
           <Link 
             to="/contact" 
-            className="text-foreground hover:text-primary transition-colors"
+            className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
             tabIndex={0}
           >
             Contact
@@ -132,11 +132,11 @@ const Navbar = () => {
 
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-background border-t border-border">
+        <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-gray-100">
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
             <Link 
               to="/" 
-              className="text-foreground hover:text-primary transition-colors py-2"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2 font-medium"
               onClick={handleToggleMenu}
               tabIndex={0}
             >
@@ -144,7 +144,7 @@ const Navbar = () => {
             </Link>
             <Link 
               to="/about" 
-              className="text-foreground hover:text-primary transition-colors py-2"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2 font-medium"
               onClick={handleToggleMenu}
               tabIndex={0}
             >
@@ -152,7 +152,7 @@ const Navbar = () => {
             </Link>
             <Link 
               to="/projects" 
-              className="text-foreground hover:text-primary transition-colors py-2"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2 font-medium"
               onClick={handleToggleMenu}
               tabIndex={0}
             >
@@ -160,7 +160,7 @@ const Navbar = () => {
             </Link>
             <Link 
               to="/skills" 
-              className="text-foreground hover:text-primary transition-colors py-2"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2 font-medium"
               onClick={handleToggleMenu}
               tabIndex={0}
             >
@@ -168,7 +168,7 @@ const Navbar = () => {
             </Link>
             <Link 
               to="/blog" 
-              className="text-foreground hover:text-primary transition-colors py-2"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2 font-medium"
               onClick={handleToggleMenu}
               tabIndex={0}
             >
@@ -176,7 +176,7 @@ const Navbar = () => {
             </Link>
             <Link 
               to="/contact" 
-              className="text-foreground hover:text-primary transition-colors py-2"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2 font-medium"
               onClick={handleToggleMenu}
               tabIndex={0}
             >
@@ -199,8 +199,8 @@ const Navbar = () => {
             {isSignedIn && (
               <button
                 onClick={() => {
-                  handleSignOut();
                   handleToggleMenu();
+                  handleSignOut();
                 }}
                 className="flex items-center text-red-500 hover:text-red-600 transition-colors py-2"
                 tabIndex={0}

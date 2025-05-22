@@ -364,7 +364,7 @@ const AdminBlogPage = () => {
     };
 
     return (
-      <div className="container mx-auto px-4 py-12 min-h-screen">
+      <div className="container mx-auto px-4 pt-24 py-12 min-h-screen">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Blog Management</h1>
           <button

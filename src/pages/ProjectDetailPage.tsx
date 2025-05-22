@@ -32,7 +32,7 @@ const ProjectDetailPage = () => {
   // Loading state
   if (!project) {
     return (
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 pt-24 py-12">
         <div className="animate-pulse flex flex-col space-y-8 max-w-5xl mx-auto">
           <div className="h-10 bg-secondary/40 rounded w-1/3"></div>
           <div className="h-80 bg-secondary/40 rounded"></div>
@@ -47,7 +47,7 @@ const ProjectDetailPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 pt-24 py-12">
       <div className="max-w-5xl mx-auto">
         {/* Back Button */}
         <div className="mb-8">

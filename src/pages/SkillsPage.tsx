@@ -61,7 +61,7 @@ const SkillsPage = () => {
   ];
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto px-4 pt-24">
       <section className="py-12 md:py-16 max-w-5xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center">Skills</h1>
         
