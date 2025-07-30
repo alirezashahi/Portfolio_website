@@ -6,7 +6,7 @@ import { Id } from "../../convex/_generated/dataModel";
 
 const AboutPage = () => {
   // Define the CV storage ID
-  const cvStorageId = "kg28wwh9dg6jmq6gzxnx18r3yd7f7b1y" as unknown as Id<"_storage">;
+  const cvStorageId = "kg217xf84j279xy4c0kebdgmz17mpbgr" as unknown as Id<"_storage">;
   
   // Get the download URL for the CV
   const cvUrl = useQuery(api.files.getFileUrl, { storageId: cvStorageId });
